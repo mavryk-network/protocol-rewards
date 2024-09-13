@@ -4,8 +4,8 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/mavryk-network/mvgo/mavryk"
 	"github.com/samber/lo"
-	"github.com/trilitech/tzgo/tezos"
 )
 
 var (
@@ -14,23 +14,23 @@ var (
 
 type state struct {
 	lastFetchedCycle      int64
-	delegatesBeingFetched map[int64][]tezos.Address
+	delegatesBeingFetched map[int64][]mavryk.Address
 }
 
 func newState() *state {
 	return &state{
-		delegatesBeingFetched: make(map[int64][]tezos.Address),
+		delegatesBeingFetched: make(map[int64][]mavryk.Address),
 	}
 }
 
-func (s *state) AddDelegateBeingFetched(cycle int64, delegate ...tezos.Address) {
+func (s *state) AddDelegateBeingFetched(cycle int64, delegate ...mavryk.Address) {
 	mtx.Lock()
 	defer mtx.Unlock()
 
 	s.delegatesBeingFetched[cycle] = append(s.delegatesBeingFetched[cycle], delegate...)
 }
 
-func (s *state) RemoveCycleBeingFetched(cycle int64, delegate ...tezos.Address) {
+func (s *state) RemoveCycleBeingFetched(cycle int64, delegate ...mavryk.Address) {
 	mtx.Lock()
 	defer mtx.Unlock()
 
@@ -38,7 +38,7 @@ func (s *state) RemoveCycleBeingFetched(cycle int64, delegate ...tezos.Address) 
 		return
 	}
 
-	s.delegatesBeingFetched[cycle] = lo.Filter(s.delegatesBeingFetched[cycle], func(d tezos.Address, _ int) bool {
+	s.delegatesBeingFetched[cycle] = lo.Filter(s.delegatesBeingFetched[cycle], func(d mavryk.Address, _ int) bool {
 		for _, del := range delegate {
 			if d.Equal(del) {
 				return false
@@ -48,7 +48,7 @@ func (s *state) RemoveCycleBeingFetched(cycle int64, delegate ...tezos.Address) 
 	})
 }
 
-func (s *state) IsDelegateBeingFetched(cycle int64, delegate tezos.Address) bool {
+func (s *state) IsDelegateBeingFetched(cycle int64, delegate mavryk.Address) bool {
 	mtx.RLock()
 	defer mtx.RUnlock()
 

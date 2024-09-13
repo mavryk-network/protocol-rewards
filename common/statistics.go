@@ -1,6 +1,6 @@
 package common
 
-import "github.com/trilitech/tzgo/tezos"
+import "github.com/mavryk-network/mvgo/mavryk"
 
 type DelegateCycleStatistics struct {
 	ExternalStaked    int64 `json:"external_staked"`
@@ -10,6 +10,6 @@ type DelegateCycleStatistics struct {
 }
 
 type CycleStatistics struct {
-	Cycle     int64                                     `json:"cycle"`
-	Delegates map[tezos.Address]DelegateCycleStatistics `json:"delegates"`
+	Cycle     int64                                      `json:"cycle"`
+	Delegates map[mavryk.Address]DelegateCycleStatistics `json:"delegates"`
 }

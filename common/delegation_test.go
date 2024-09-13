@@ -3,15 +3,15 @@ package common
 import (
 	"testing"
 
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/mvgo/rpc"
 	"github.com/stretchr/testify/assert"
-	"github.com/trilitech/tzgo/rpc"
-	"github.com/trilitech/tzgo/tezos"
 )
 
 func TestOverstake(t *testing.T) {
 	assert := assert.New(t)
 
-	baker := tezos.MustParseAddress("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
+	baker := mavryk.MustParseAddress("mv1ELYevTeKz1tb8J8cqtYnz2vRdv9tamNmr")
 
 	s := NewDelegationState(&rpc.Delegate{
 		Delegate: baker,
@@ -21,7 +21,7 @@ func TestOverstake(t *testing.T) {
 		LimitOfStakingOverBakingMillionth: 0,
 	}
 
-	s.AddBalance(tezos.MustParseAddress("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx"), DelegationStateBalanceInfo{
+	s.AddBalance(mavryk.MustParseAddress("mv1ELYevTeKz1tb8J8cqtYnz2vRdv9tamNmr"), DelegationStateBalanceInfo{
 		Balance:         1000000000,
 		StakedBalance:   1000,
 		UnstakedBalance: 0,
@@ -29,7 +29,7 @@ func TestOverstake(t *testing.T) {
 		StakeBaker:      baker,
 	})
 
-	delegator := tezos.MustParseAddress("tz1P6WKJu2rcbxKiKRZHKQKmKrpC9TfW1AwM")
+	delegator := mavryk.MustParseAddress("mv1VNRtHZdLzSJfyvvz2cxAoR1kWoNDWMisL")
 
 	s.AddBalance(delegator, DelegationStateBalanceInfo{
 		Balance:         1000000000,
@@ -54,7 +54,7 @@ func TestOverstake(t *testing.T) {
 	assert.Equal(int64(500000), s.overstakeFactor().Int64())
 	assert.Equal(int64(500), s.GetDelegatorAndBakerBalances()[delegator].OverstakedBalance)
 
-	delegator2 := tezos.MustParseAddress("tz1S5WxdZR5f9NzsPXhr7L9L1vrEb5spZFur")
+	delegator2 := mavryk.MustParseAddress("mv18vxoSEtntT8WJnjrXKD8qxcepcJeTGmkA")
 
 	s.AddBalance(delegator2, DelegationStateBalanceInfo{
 		Balance:         1000000000,

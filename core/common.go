@@ -1,8 +1,8 @@
 package core
 
 import (
-	"github.com/tez-capital/protocol-rewards/common"
-	"github.com/trilitech/tzgo/tezos"
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/protocol-rewards/common"
 )
 
 var (
@@ -13,18 +13,18 @@ var (
 
 type PRBalanceUpdate struct {
 	// rpc.BalanceUpdate
-	Address tezos.Address `json:"address"`
-	Amount  int64         `json:"amount,string"`
+	Address mavryk.Address `json:"address"`
+	Amount  int64          `json:"amount,string"`
 
 	Kind     string `json:"kind"`
 	Category string `json:"category"`
 
-	Operation     tezos.OpHash            `json:"operation"`
+	Operation     mavryk.OpHash           `json:"operation"`
 	Index         int                     `json:"index"`
 	InternalIndex int                     `json:"internal_index"`
 	Source        common.CreationInfoKind `json:"source"`
 
-	Delegate tezos.Address `json:"delegate"`
+	Delegate mavryk.Address `json:"delegate"`
 }
 
 type PRBalanceUpdates []PRBalanceUpdate

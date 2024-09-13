@@ -12,7 +12,7 @@ services:
       - betanet-delegation-rewards-network
 
   delegation_rewards:
-    image: ghcr.io/tez-capital/protocol-rewards:latest
+    image: ghcr.io/mavryk-network/protocol-rewards:latest
     restart: always
     ports:
       - "127.0.0.1:8082:8080"

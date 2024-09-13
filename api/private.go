@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/tez-capital/protocol-rewards/configuration"
-	"github.com/tez-capital/protocol-rewards/core"
-	"github.com/trilitech/tzgo/tezos"
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/protocol-rewards/configuration"
+	"github.com/mavryk-network/protocol-rewards/core"
 )
 
 func registerFetchCycle(app *fiber.App, engine *core.Engine) {
@@ -37,7 +37,7 @@ func registerFetchDelegate(app *fiber.App, engine *core.Engine) {
 			})
 		}
 
-		address, err := tezos.ParseAddress(c.Params("address"))
+		address, err := mavryk.ParseAddress(c.Params("address"))
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),

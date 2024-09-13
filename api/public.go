@@ -8,11 +8,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
-	"github.com/tez-capital/protocol-rewards/configuration"
-	"github.com/tez-capital/protocol-rewards/constants"
-	"github.com/tez-capital/protocol-rewards/core"
-	"github.com/tez-capital/protocol-rewards/store"
-	"github.com/trilitech/tzgo/tezos"
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/protocol-rewards/configuration"
+	"github.com/mavryk-network/protocol-rewards/constants"
+	"github.com/mavryk-network/protocol-rewards/core"
+	"github.com/mavryk-network/protocol-rewards/store"
 )
 
 func registerGetDelegationState(app *fiber.App, engine *core.Engine) {
@@ -24,7 +24,7 @@ func registerGetDelegationState(app *fiber.App, engine *core.Engine) {
 			})
 		}
 
-		address, err := tezos.ParseAddress(c.Params("address"))
+		address, err := mavryk.ParseAddress(c.Params("address"))
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
@@ -56,7 +56,7 @@ func registerIsDelegationStateAvailable(app *fiber.App, engine *core.Engine) {
 			})
 		}
 
-		address, err := tezos.ParseAddress(c.Params("address"))
+		address, err := mavryk.ParseAddress(c.Params("address"))
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
@@ -103,7 +103,7 @@ func registerRewardsSplitMirror(app *fiber.App, engine *core.Engine) {
 			})
 		}
 
-		address, err := tezos.ParseAddress(c.Params("address"))
+		address, err := mavryk.ParseAddress(c.Params("address"))
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
@@ -129,7 +129,7 @@ func registerRewardsSplitMirror(app *fiber.App, engine *core.Engine) {
 			})
 		}
 
-		return c.JSON(state.ToTzktState())
+		return c.JSON(state.ToMvktState())
 	})
 }
 

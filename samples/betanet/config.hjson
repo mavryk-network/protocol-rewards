@@ -2,8 +2,8 @@
     providers: [
          https://rpc.betanet-2024-07-24.teztnets.com
     ]
-    tzkt_providers: [
-         https://api.betanet.tzkt.io/
+    mvkt_providers: [
+         https://api.betanet.mvkt.io/
     ]
     storage: {
         mode: rolling

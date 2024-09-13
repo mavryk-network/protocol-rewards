@@ -1,4 +1,4 @@
-module github.com/tez-capital/protocol-rewards
+module github.com/mavryk-network/protocol-rewards
 
 go 1.22.4
 
@@ -6,10 +6,10 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/hjson/hjson-go/v4 v4.4.0
 	github.com/joho/godotenv v1.5.1
+	github.com/mavryk-network/mvgo v1.19.9
 	github.com/pierrec/lz4/v4 v4.1.21
 	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.9.0
-	github.com/trilitech/tzgo v1.19.7-0.20240615084153-32cae2559148
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.10
 )

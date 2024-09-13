@@ -4,11 +4,10 @@ config.hjson
 ```hjson
 {
    providers: [
-      https://eu.rpc.tez.capital/
-      https://rpc.tzkt.io/mainnet/
+      https://atlasnet.rpc.mavryk.network/
    ]
-   tzkt_providers: [
-       https://api.tzkt.io/
+   mvkt_providers: [
+       https://atlasnet.api.mavryk.network/
    ]
    database: {
       host: 127.0.0.1
@@ -28,9 +27,9 @@ config.hjson
    }
    // optional subset if wanted, if not just delete it or keep it empty
    delegates: [
-      tz1P6WKJu2rcbxKiKRZHKQKmKrpC9TfW1AwM
-      tz1LVqmufjrmV67vNmZWXRDPMwSCh7mLBnS3
-      tz1WzjeZrQm2JJT43rk7USfmnSQ2nLSebtta
+      mv1VNRtHZdLzSJfyvvz2cxAoR1kWoNDWMisL
+      mv1CtCq3D2RrCxx6VL5aMTkfq8tYLSK4sXmN
+      mv1SZS8SZB5Wt5GTMnLxqxn13pAXrSNMsXQ1
    ]
 }
 ```
@@ -49,9 +48,9 @@ U can define env variables in the .env file or in your environment directly as y
 
 testing command flags
 ```
-go run main.go -log debug -test tz1gXWW1q8NcXtVy2oVVcc2s4XKNzv9CryWd:745
+go run main.go -log debug -test mv1VW2QKBXfsroTFkdaS5xejZXbmpGrxYu6u:745
 ```
 
 ### Credits
 
-**Powered by [TzKT API](https://api.tzkt.io/)** - `protocol-rewards` use TZKT api to fetch unstake requests.
+**Powered by [MvKT API](https://atlasnet.api.mavryk.network/)** - `protocol-rewards` use MVKT api to fetch unstake requests.

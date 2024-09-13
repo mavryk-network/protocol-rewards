@@ -12,12 +12,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/tez-capital/protocol-rewards/api"
-	"github.com/tez-capital/protocol-rewards/configuration"
-	"github.com/tez-capital/protocol-rewards/constants"
-	"github.com/tez-capital/protocol-rewards/core"
-	"github.com/tez-capital/protocol-rewards/test"
-	"github.com/trilitech/tzgo/tezos"
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/protocol-rewards/api"
+	"github.com/mavryk-network/protocol-rewards/configuration"
+	"github.com/mavryk-network/protocol-rewards/constants"
+	"github.com/mavryk-network/protocol-rewards/core"
+	"github.com/mavryk-network/protocol-rewards/test"
 )
 
 func run_test(ctx context.Context, testFlag string, config *configuration.Runtime, cacheId *string) {
@@ -48,7 +48,7 @@ func run_test(ctx context.Context, testFlag string, config *configuration.Runtim
 			return
 		}
 
-		engine.FetchDelegateDelegationState(ctx, tezos.MustParseAddress(address), cycle, 0, &core.DebugFetchOptions)
+		engine.FetchDelegateDelegationState(ctx, mavryk.MustParseAddress(address), cycle, 0, &core.DebugFetchOptions)
 		return
 	}
 
