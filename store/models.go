@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/tez-capital/protocol-rewards/common"
-	"github.com/trilitech/tzgo/tezos"
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/protocol-rewards/common"
 )
 
 type DelegationStateStatus int
@@ -35,7 +35,7 @@ func (j *DelegationStateBalances) Scan(src interface{}) error {
 }
 
 type Address struct {
-	tezos.Address
+	mavryk.Address
 }
 
 func (a Address) Value() (driver.Value, error) {
@@ -50,7 +50,7 @@ func (a *Address) Scan(src interface{}) error {
 	if !ok {
 		return errors.New("type assertion .([]byte) failed")
 	}
-	addr, err := tezos.ParseAddress(string(source))
+	addr, err := mavryk.ParseAddress(string(source))
 	if err != nil {
 		return err
 	}
@@ -58,20 +58,20 @@ func (a *Address) Scan(src interface{}) error {
 	return nil
 }
 
-type TzktDelegator struct {
-	Address          tezos.Address `json:"address"`
-	DelegatedBalance int64         `json:"delegatedBalance"`
-	StakedBalance    int64         `json:"stakedBalance"`
+type MvktDelegator struct {
+	Address          mavryk.Address `json:"address"`
+	DelegatedBalance int64          `json:"delegatedBalance"`
+	StakedBalance    int64          `json:"stakedBalance"`
 }
 
-type TzktLikeDelegationState struct {
+type MvktLikeDelegationState struct {
 	Cycle                    int64           `json:"cycle"`
 	OwnDelegatedBalance      int64           `json:"ownDelegatedBalance"`
 	OwnStakedBalance         int64           `json:"ownStakedBalance"`
 	ExternalDelegatedBalance int64           `json:"externalDelegatedBalance"`
 	ExternalStakedBalance    int64           `json:"externalStakedBalance"`
 	DelegatorsCount          int             `json:"delegatorsCount"`
-	Delegators               []TzktDelegator `json:"delegators"`
+	Delegators               []MvktDelegator `json:"delegators"`
 }
 
 type StoredDelegationState struct {
@@ -97,11 +97,11 @@ func (s *StoredDelegationState) ExternalDelegatedBalance() common.DelegatorBalan
 	return result
 }
 
-func (s *StoredDelegationState) ToTzktState() *TzktLikeDelegationState {
-	delegators := make([]TzktDelegator, 0, len(s.Balances)-1)
+func (s *StoredDelegationState) ToMvktState() *MvktLikeDelegationState {
+	delegators := make([]MvktDelegator, 0, len(s.Balances)-1)
 	for addr, balances := range s.Balances {
-		if !addr.Equal(s.Delegate.Address) && !addr.Equal(tezos.BurnAddress) {
-			delegators = append(delegators, TzktDelegator{
+		if !addr.Equal(s.Delegate.Address) && !addr.Equal(mavryk.BurnAddress) {
+			delegators = append(delegators, MvktDelegator{
 				Address: addr,
 				// move overstaked balance to delegated balance
 				DelegatedBalance: balances.DelegatedBalance + balances.OverstakedBalance,
@@ -113,7 +113,7 @@ func (s *StoredDelegationState) ToTzktState() *TzktLikeDelegationState {
 	ownBalances := s.OwnDelegatedbalance()
 	externalBalances := s.ExternalDelegatedBalance()
 
-	result := &TzktLikeDelegationState{
+	result := &MvktLikeDelegationState{
 		Cycle:                    s.Cycle,
 		OwnDelegatedBalance:      ownBalances.DelegatedBalance,
 		OwnStakedBalance:         ownBalances.StakedBalance,

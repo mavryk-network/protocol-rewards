@@ -64,7 +64,7 @@ func (t *TestTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	path := req.URL.Path
-	if strings.Contains("api.tzkt.io", req.URL.Host) { // we need full path for tzkt
+	if strings.Contains("atlasnet.api.mavryk.network", req.URL.Host) { // we need full path for mvkt
 		path = path + req.URL.RawQuery
 	}
 	path = strings.TrimPrefix(path, "/mainnet")

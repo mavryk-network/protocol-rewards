@@ -10,14 +10,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/mvgo/rpc"
+	"github.com/mavryk-network/protocol-rewards/common"
+	"github.com/mavryk-network/protocol-rewards/configuration"
+	"github.com/mavryk-network/protocol-rewards/constants"
+	"github.com/mavryk-network/protocol-rewards/notifications"
+	"github.com/mavryk-network/protocol-rewards/store"
 	"github.com/samber/lo"
-	"github.com/tez-capital/protocol-rewards/common"
-	"github.com/tez-capital/protocol-rewards/configuration"
-	"github.com/tez-capital/protocol-rewards/constants"
-	"github.com/tez-capital/protocol-rewards/notifications"
-	"github.com/tez-capital/protocol-rewards/store"
-	"github.com/trilitech/tzgo/rpc"
-	"github.com/trilitech/tzgo/tezos"
 )
 
 type Engine struct {
@@ -26,7 +26,7 @@ type Engine struct {
 	store       *store.Store
 	state       *state
 	notificator *notifications.DiscordNotificator
-	delegates   []tezos.Address
+	delegates   []mavryk.Address
 	logger      *slog.Logger
 }
 
@@ -50,7 +50,7 @@ func NewEngine(ctx context.Context, config *configuration.Runtime, options *Engi
 		options = DefaultEngineOptions
 	}
 
-	collector, err := newRpcCollector(ctx, config.Providers, config.TzktProviders, options.Transport)
+	collector, err := newRpcCollector(ctx, config.Providers, config.MvktProviders, options.Transport)
 	if err != nil {
 		slog.Error("failed to create new RPC Collector", "error", err)
 		return nil, err
@@ -84,7 +84,7 @@ func NewEngine(ctx context.Context, config *configuration.Runtime, options *Engi
 	return result, nil
 }
 
-func (e *Engine) fetchDelegateDelegationStateInternal(ctx context.Context, delegateAddress tezos.Address, cycle, lastBlockInTheCycle int64, options *FetchOptions) error {
+func (e *Engine) fetchDelegateDelegationStateInternal(ctx context.Context, delegateAddress mavryk.Address, cycle, lastBlockInTheCycle int64, options *FetchOptions) error {
 	if options == nil {
 		options = &defaultFetchOptions
 	}
@@ -133,7 +133,7 @@ func (e *Engine) fetchDelegateDelegationStateInternal(ctx context.Context, deleg
 	return e.store.StoreDelegationState(storableState)
 }
 
-func (e *Engine) FetchDelegateDelegationState(ctx context.Context, delegateAddress tezos.Address, cycle, lastBlockInTheCycle int64, options *FetchOptions) error {
+func (e *Engine) FetchDelegateDelegationState(ctx context.Context, delegateAddress mavryk.Address, cycle, lastBlockInTheCycle int64, options *FetchOptions) error {
 	e.logger.Info("fetching delegate delegation state", "cycle", cycle, "delegate", delegateAddress.String(), "force_fetch", options)
 	lastCompletedCycle, _, err := e.collector.GetLastCompletedCycle(ctx)
 	if err != nil {
@@ -156,7 +156,7 @@ func (e *Engine) FetchDelegateDelegationState(ctx context.Context, delegateAddre
 	return nil
 }
 
-func (e *Engine) getDelegates(ctx context.Context, lastBlockInTheCycle int64) ([]tezos.Address, error) {
+func (e *Engine) getDelegates(ctx context.Context, lastBlockInTheCycle int64) ([]mavryk.Address, error) {
 	delegates, err := e.collector.GetActiveDelegatesFromCycle(ctx, rpc.BlockLevel(lastBlockInTheCycle))
 	if err != nil {
 		e.logger.Error("failed to fetch active delegates from block", "block", lastBlockInTheCycle, "error", err.Error())
@@ -167,7 +167,7 @@ func (e *Engine) getDelegates(ctx context.Context, lastBlockInTheCycle int64) ([
 		return delegates, nil
 	}
 
-	delegates = lo.Filter(delegates, func(d tezos.Address, _ int) bool {
+	delegates = lo.Filter(delegates, func(d mavryk.Address, _ int) bool {
 		return slices.Contains(e.delegates, d)
 	})
 
@@ -195,7 +195,7 @@ func (e *Engine) FetchCycleDelegationStates(ctx context.Context, cycle, lastBloc
 		return err
 	}
 
-	err = runInParallel(ctx, delegates, constants.DELEGATE_FETCH_BATCH_SIZE, func(ctx context.Context, item tezos.Address, mtx *sync.RWMutex) bool {
+	err = runInParallel(ctx, delegates, constants.DELEGATE_FETCH_BATCH_SIZE, func(ctx context.Context, item mavryk.Address, mtx *sync.RWMutex) bool {
 		err := e.fetchDelegateDelegationStateInternal(ctx, item, cycle, lastBlockInTheCycle, options)
 		if err != nil {
 			e.logger.Error("failed to fetch delegate delegation state", "cycle", cycle, "delegate", item.String(), "error", err.Error())
@@ -216,16 +216,16 @@ func (e *Engine) FetchCycleDelegationStates(ctx context.Context, cycle, lastBloc
 	return nil
 }
 
-func (e *Engine) IsDelegateBeingFetched(cycle int64, delegate tezos.Address) bool {
+func (e *Engine) IsDelegateBeingFetched(cycle int64, delegate mavryk.Address) bool {
 	return e.state.IsDelegateBeingFetched(cycle, delegate)
 }
 
-func (e *Engine) GetDelegationState(ctx context.Context, delegate tezos.Address, cycle int64) (*store.StoredDelegationState, error) {
+func (e *Engine) GetDelegationState(ctx context.Context, delegate mavryk.Address, cycle int64) (*store.StoredDelegationState, error) {
 	cycle = e.collector.GetCycleBakingPowerOrigin(ctx, cycle)
 	return e.store.GetDelegationState(delegate, cycle)
 }
 
-func (e *Engine) IsDelegationStateAvailable(ctx context.Context, delegate tezos.Address, cycle int64) (bool, error) {
+func (e *Engine) IsDelegationStateAvailable(ctx context.Context, delegate mavryk.Address, cycle int64) (bool, error) {
 	cycle = e.collector.GetCycleBakingPowerOrigin(ctx, cycle)
 	return e.store.IsDelegationStateAvailable(delegate, cycle)
 }
@@ -272,7 +272,7 @@ func (e *Engine) fetchAutomatically() {
 
 				for cycle := lastFetchedCycle + 1; cycle <= lastOnChainCompletedCycle; cycle++ {
 					// this is not ideal but we can not determine last block on testnets easily
-					// so we try to use available last block level, if not fall back to lookup in cycle table which works on mainnet and networks with known parameters by tzgo
+					// so we try to use available last block level, if not fall back to lookup in cycle table which works on mainnet and networks with known parameters by mvgo
 					lastBlock := int64(0)
 					if cycle == lastOnChainCompletedCycle {
 						lastBlock = lastBlockInTheCycle

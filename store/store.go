@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/tez-capital/protocol-rewards/common"
-	"github.com/tez-capital/protocol-rewards/configuration"
-	"github.com/tez-capital/protocol-rewards/constants"
-	"github.com/trilitech/tzgo/tezos"
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/protocol-rewards/common"
+	"github.com/mavryk-network/protocol-rewards/configuration"
+	"github.com/mavryk-network/protocol-rewards/constants"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -45,7 +45,7 @@ func NewStore(config *configuration.Runtime) (*Store, error) {
 	}, nil
 }
 
-func (s *Store) GetDelegationState(delegate tezos.Address, cycle int64) (*StoredDelegationState, error) {
+func (s *Store) GetDelegationState(delegate mavryk.Address, cycle int64) (*StoredDelegationState, error) {
 	var state StoredDelegationState
 	if err := s.db.Model(&StoredDelegationState{}).Where("delegate = ? AND cycle = ?", delegate, cycle).First(&state).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -82,7 +82,7 @@ func (s *Store) PruneDelegationState(cycle int64) error {
 
 }
 
-func (s *Store) IsDelegationStateAvailable(delegate tezos.Address, cycle int64) (bool, error) {
+func (s *Store) IsDelegationStateAvailable(delegate mavryk.Address, cycle int64) (bool, error) {
 	var count int64
 	s.db.Model(&StoredDelegationState{}).Where("delegate = ? AND cycle = ?", delegate, cycle).Count(&count)
 	return count > 0, nil
@@ -96,7 +96,7 @@ func (s *Store) Statistics(cycle int64) (*common.CycleStatistics, error) {
 
 	result := &common.CycleStatistics{
 		Cycle:     cycle,
-		Delegates: make(map[tezos.Address]common.DelegateCycleStatistics),
+		Delegates: make(map[mavryk.Address]common.DelegateCycleStatistics),
 	}
 
 	for _, state := range states {

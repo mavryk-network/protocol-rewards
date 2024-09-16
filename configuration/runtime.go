@@ -6,9 +6,9 @@ import (
 
 	"github.com/hjson/hjson-go/v4"
 	"github.com/joho/godotenv"
-	"github.com/tez-capital/protocol-rewards/constants"
-	"github.com/tez-capital/protocol-rewards/notifications"
-	"github.com/trilitech/tzgo/tezos"
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/protocol-rewards/constants"
+	"github.com/mavryk-network/protocol-rewards/notifications"
 )
 
 type DatabaseConfiguration struct {
@@ -31,11 +31,11 @@ type StorageConfiguration struct {
 
 type Runtime struct {
 	Providers          []string                                      `json:"providers"`
-	TzktProviders      []string                                      `json:"tzkt_providers"`
+	MvktProviders      []string                                      `json:"mvkt_providers"`
 	Database           DatabaseConfiguration                         `json:"database"`
 	Storage            StorageConfiguration                          `json:"storage"`
 	DiscordNotificator notifications.DiscordNotificatorConfiguration `json:"discord_notificator"`
-	Delegates          []tezos.Address                               `json:"delegates,omitempty"`
+	Delegates          []mavryk.Address                              `json:"delegates,omitempty"`
 	LogLevel           slog.Level                                    `json:"-"`
 	Listen             string                                        `json:"-"`
 	PrivateListen      string                                        `json:"-"`

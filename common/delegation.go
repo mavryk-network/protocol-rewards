@@ -3,10 +3,10 @@ package common
 import (
 	"sync"
 
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/mvgo/rpc"
+	"github.com/mavryk-network/protocol-rewards/constants"
 	"github.com/samber/lo"
-	"github.com/tez-capital/protocol-rewards/constants"
-	"github.com/trilitech/tzgo/rpc"
-	"github.com/trilitech/tzgo/tezos"
 )
 
 type BalanceUpdateKind string
@@ -31,16 +31,16 @@ type StakingParameters struct {
 }
 
 type FinalizableUnstakeRequest struct {
-	Delegate tezos.Address `json:"delegate"`
-	Amount   tezos.Z       `json:"amount"`
-	Cycle    int64         `json:"cycle"`
+	Delegate mavryk.Address `json:"delegate"`
+	Amount   mavryk.Z       `json:"amount"`
+	Cycle    int64          `json:"cycle"`
 }
 
 type UnfinalizableUnstakeRequests struct {
-	Delegate tezos.Address `json:"delegate"`
+	Delegate mavryk.Address `json:"delegate"`
 	Requests []struct {
-		Amount tezos.Z `json:"amount"`
-		Cycle  int64   `json:"cycle"`
+		Amount mavryk.Z `json:"amount"`
+		Cycle  int64    `json:"cycle"`
 	} `json:"requests"`
 }
 
@@ -49,8 +49,8 @@ type UnstakeRequests struct {
 	Unfinalizable UnfinalizableUnstakeRequests `json:"unfinalizable"`
 }
 
-func (u *UnstakeRequests) GetUnstakedTotalForBaker(baker tezos.Address) int64 {
-	total := tezos.Zero
+func (u *UnstakeRequests) GetUnstakedTotalForBaker(baker mavryk.Address) int64 {
+	total := mavryk.Zero
 	for _, request := range u.Finalizable {
 		if request.Delegate.Equal(baker) {
 			total = total.Add(request.Amount)
@@ -65,7 +65,7 @@ func (u *UnstakeRequests) GetUnstakedTotalForBaker(baker tezos.Address) int64 {
 }
 
 func (u *UnstakeRequests) GetUnstakedTotal() int64 {
-	total := tezos.Zero
+	total := mavryk.Zero
 	for _, request := range u.Finalizable {
 		total = total.Add(request.Amount)
 	}
@@ -82,18 +82,18 @@ type DelegatorBalances struct {
 	StakedBalance     int64 `json:"staked_balance"`
 }
 
-type DelegatedBalances map[tezos.Address]DelegatorBalances
+type DelegatedBalances map[mavryk.Address]DelegatorBalances
 
 type DelegationStateBalanceInfo struct {
-	Balance         int64         `json:"balance"`
-	StakedBalance   int64         `json:"frozen_deposits"`
-	UnstakedBalance int64         `json:"unfrozen_deposits"`
-	Baker           tezos.Address `json:"delegate"`
+	Balance         int64          `json:"balance"`
+	StakedBalance   int64          `json:"frozen_deposits"`
+	UnstakedBalance int64          `json:"unfrozen_deposits"`
+	Baker           mavryk.Address `json:"delegate"`
 	// baker we stake with, can differ in case of delegation change
-	StakeBaker tezos.Address `json:"stake_baker"`
+	StakeBaker mavryk.Address `json:"stake_baker"`
 }
 
-type DelegationStateBalances map[tezos.Address]DelegationStateBalanceInfo
+type DelegationStateBalances map[mavryk.Address]DelegationStateBalanceInfo
 
 // TODO: find better name for this
 type CreationInfoKind string
@@ -111,14 +111,14 @@ const (
 
 type DelegationStateCreationInfo struct {
 	Level         int64            `json:"level"`
-	Operation     tezos.OpHash     `json:"operation"`
+	Operation     mavryk.OpHash    `json:"operation"`
 	Index         int              `json:"transaction_index"`
 	InternalIndex int              `json:"internal_result_index"`
 	Kind          CreationInfoKind `json:"kind"`
 }
 
 type DelegationState struct {
-	Baker          tezos.Address      `json:"baker"`
+	Baker          mavryk.Address     `json:"baker"`
 	Cycle          int64              `json:"cycle"`
 	LastBlockLevel rpc.BlockID        `json:"last_block_level"`
 	Parameters     *StakingParameters `json:"staking_parameters"`
@@ -139,25 +139,25 @@ func NewDelegationState(delegate *rpc.Delegate, cycle int64, lastBlockLevel rpc.
 	}
 }
 
-func (d *DelegationState) overstakeFactor() tezos.Z {
+func (d *DelegationState) overstakeFactor() mavryk.Z {
 	bakerStakingBalance := d.GetBakerStakedBalance()
-	limit := tezos.NewZ(d.Parameters.LimitOfStakingOverBakingMillionth).Mul64(bakerStakingBalance).Div64(1_000_000)
-	stakedBalance := tezos.NewZ(d.GetStakersStakedBalance())
+	limit := mavryk.NewZ(d.Parameters.LimitOfStakingOverBakingMillionth).Mul64(bakerStakingBalance).Div64(1_000_000)
+	stakedBalance := mavryk.NewZ(d.GetStakersStakedBalance())
 	if stakedBalance.IsLess(limit) {
-		return tezos.Zero
+		return mavryk.Zero
 	}
 	overLimit := stakedBalance.Sub(limit)
 
 	return overLimit.Mul64(OVERSTAKE_PRECISION).Div(stakedBalance)
 }
 
-func (d *DelegationState) AddBalance(address tezos.Address, balanceInfo DelegationStateBalanceInfo) {
+func (d *DelegationState) AddBalance(address mavryk.Address, balanceInfo DelegationStateBalanceInfo) {
 	d.balancesMtx.Lock()
 	defer d.balancesMtx.Unlock()
 	d.balances[address] = balanceInfo
 }
 
-func (d *DelegationState) UpdateBalance(address tezos.Address, kind string, change int64) error {
+func (d *DelegationState) UpdateBalance(address mavryk.Address, kind string, change int64) error {
 	d.balancesMtx.RLock()
 	balanceInfo, ok := d.balances[address]
 	d.balancesMtx.RUnlock()
@@ -179,7 +179,7 @@ func (d *DelegationState) UpdateBalance(address tezos.Address, kind string, chan
 	return nil
 }
 
-func (d *DelegationState) Delegate(delegator tezos.Address, delegate tezos.Address) error {
+func (d *DelegationState) Delegate(delegator mavryk.Address, delegate mavryk.Address) error {
 	d.balancesMtx.RLock()
 	balanceInfo, ok := d.balances[delegator]
 	d.balancesMtx.RUnlock()
@@ -257,7 +257,7 @@ func (d *DelegationState) GetDelegatorAndBakerBalances() DelegatedBalances {
 	return delegators
 }
 
-func (d *DelegationState) HasContractBalanceInfo(address tezos.Address) bool {
+func (d *DelegationState) HasContractBalanceInfo(address mavryk.Address) bool {
 	d.balancesMtx.RLock()
 	defer d.balancesMtx.RUnlock()
 	_, ok := d.balances[address]

@@ -12,16 +12,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/mvgo/rpc"
+	"github.com/mavryk-network/protocol-rewards/common"
+	"github.com/mavryk-network/protocol-rewards/constants"
 	"github.com/samber/lo"
-	"github.com/tez-capital/protocol-rewards/common"
-	"github.com/tez-capital/protocol-rewards/constants"
-	"github.com/trilitech/tzgo/rpc"
-	"github.com/trilitech/tzgo/tezos"
 )
 
 type rpcCollector struct {
 	rpcs     []*rpc.Client
-	tzktUrls []string
+	mvktUrls []string
 	client   *http.Client
 }
 
@@ -74,10 +74,10 @@ func initRpcClient(ctx context.Context, rpcUrl string, transport http.RoundTripp
 	return rpcClient, nil
 }
 
-func newRpcCollector(ctx context.Context, rpcUrls []string, tzktUrls []string, transport http.RoundTripper) (*rpcCollector, error) {
+func newRpcCollector(ctx context.Context, rpcUrls []string, mvktUrls []string, transport http.RoundTripper) (*rpcCollector, error) {
 	result := &rpcCollector{
 		rpcs:     make([]*rpc.Client, 0, len(rpcUrls)),
-		tzktUrls: tzktUrls,
+		mvktUrls: mvktUrls,
 		client: &http.Client{
 			Timeout: constants.HTTP_CLIENT_TIMEOUT_SECONDS * time.Second,
 		},
@@ -98,23 +98,23 @@ func newRpcCollector(ctx context.Context, rpcUrls []string, tzktUrls []string, t
 		return nil, errors.New("no rpc clients available")
 	}
 
-	result.tzktUrls = tzktUrls
+	result.mvktUrls = mvktUrls
 	result.client.Transport = transport
 	return result, nil
 }
 
-func (engine *rpcCollector) getContractStakedBalance(ctx context.Context, addr tezos.Address, id rpc.BlockID) (tezos.Z, error) {
+func (engine *rpcCollector) getContractStakedBalance(ctx context.Context, addr mavryk.Address, id rpc.BlockID) (mavryk.Z, error) {
 	u := fmt.Sprintf("chains/main/blocks/%s/context/contracts/%s/staked_balance", id, addr)
 
-	return attemptWithClients(engine.rpcs, func(client *rpc.Client) (tezos.Z, error) {
-		var bal tezos.Z
+	return attemptWithClients(engine.rpcs, func(client *rpc.Client) (mavryk.Z, error) {
+		var bal mavryk.Z
 		err := client.Get(ctx, u, &bal)
 		return bal, err
 	})
 }
 
-func (engine *rpcCollector) getContractUnstakeRequests(ctx context.Context, addr tezos.Address, id rpc.BlockID) (common.UnstakeRequests, error) {
-	// chains/main/blocks/5896790/context/contracts/tz1epK8fDnc8tUeK6dNwTjiHqrGzX586ozyt/unstake_requests
+func (engine *rpcCollector) getContractUnstakeRequests(ctx context.Context, addr mavryk.Address, id rpc.BlockID) (common.UnstakeRequests, error) {
+	// chains/main/blocks/5896790/context/contracts/mv187k5qcKJwKXwtx1nhX14rPEk9vFLByzCW/unstake_requests
 	u := fmt.Sprintf("chains/main/blocks/%s/context/contracts/%s/unstake_requests", id, addr)
 
 	return attemptWithClients(engine.rpcs, func(client *rpc.Client) (common.UnstakeRequests, error) {
@@ -124,17 +124,17 @@ func (engine *rpcCollector) getContractUnstakeRequests(ctx context.Context, addr
 	})
 }
 
-func (engine *rpcCollector) getContractDelegate(ctx context.Context, addr tezos.Address, id rpc.BlockID) (tezos.Address, error) {
+func (engine *rpcCollector) getContractDelegate(ctx context.Context, addr mavryk.Address, id rpc.BlockID) (mavryk.Address, error) {
 	u := fmt.Sprintf("chains/main/blocks/%s/context/contracts/%s/delegate", id, addr)
 
-	return attemptWithClients(engine.rpcs, func(client *rpc.Client) (tezos.Address, error) {
-		var addr tezos.Address
+	return attemptWithClients(engine.rpcs, func(client *rpc.Client) (mavryk.Address, error) {
+		var addr mavryk.Address
 		err := client.Get(ctx, u, &addr)
 		return addr, err
 	})
 }
 
-func (engine *rpcCollector) getDelegateActiveStakingParameters(ctx context.Context, addr tezos.Address, id rpc.BlockID) (*common.StakingParameters, error) {
+func (engine *rpcCollector) getDelegateActiveStakingParameters(ctx context.Context, addr mavryk.Address, id rpc.BlockID) (*common.StakingParameters, error) {
 	u := fmt.Sprintf("chains/main/blocks/%s/context/delegates/%s/active_staking_parameters", id, addr)
 
 	return attemptWithClients(engine.rpcs, func(client *rpc.Client) (*common.StakingParameters, error) {
@@ -144,15 +144,15 @@ func (engine *rpcCollector) getDelegateActiveStakingParameters(ctx context.Conte
 	})
 }
 
-func (engine *rpcCollector) getDelegateDelegatedContracts(ctx context.Context, addr tezos.Address, id rpc.BlockID) ([]tezos.Address, error) {
+func (engine *rpcCollector) getDelegateDelegatedContracts(ctx context.Context, addr mavryk.Address, id rpc.BlockID) ([]mavryk.Address, error) {
 	u := fmt.Sprintf("chains/main/blocks/%s/context/delegates/%s/delegated_contracts", id, addr)
 
-	return attemptWithClients(engine.rpcs, func(client *rpc.Client) ([]tezos.Address, error) {
-		var delegatedContracts []tezos.Address
+	return attemptWithClients(engine.rpcs, func(client *rpc.Client) ([]mavryk.Address, error) {
+		var delegatedContracts []mavryk.Address
 		err := client.Get(ctx, u, &delegatedContracts)
 		if err != nil {
 			if strings.Contains(err.Error(), "delegate.not_registered") {
-				return []tezos.Address{}, constants.ErrDelegateNotRegistered
+				return []mavryk.Address{}, constants.ErrDelegateNotRegistered
 			}
 			var rpcErrors []rpc.GenericError
 			err2 := client.Get(ctx, u, &rpcErrors)
@@ -161,7 +161,7 @@ func (engine *rpcCollector) getDelegateDelegatedContracts(ctx context.Context, a
 			}
 			for _, rpcError := range rpcErrors {
 				if strings.Contains(rpcError.ID, "delegate.not_registered") {
-					return []tezos.Address{}, constants.ErrDelegateNotRegistered
+					return []mavryk.Address{}, constants.ErrDelegateNotRegistered
 				}
 			}
 		}
@@ -170,12 +170,12 @@ func (engine *rpcCollector) getDelegateDelegatedContracts(ctx context.Context, a
 	})
 }
 
-func (engine *rpcCollector) GetCurrentProtocol() (tezos.ProtocolHash, error) {
-	params, err := attemptWithClients(engine.rpcs, func(client *rpc.Client) (*tezos.Params, error) {
+func (engine *rpcCollector) GetCurrentProtocol() (mavryk.ProtocolHash, error) {
+	params, err := attemptWithClients(engine.rpcs, func(client *rpc.Client) (*mavryk.Params, error) {
 		return client.GetParams(context.Background(), rpc.Head)
 	})
 	if err != nil {
-		return tezos.ZeroProtocolHash, err
+		return mavryk.ZeroProtocolHash, err
 	}
 	return params.Protocol, nil
 }
@@ -219,17 +219,17 @@ func (engine *rpcCollector) GetActiveDelegatesFromCycle(ctx context.Context, las
 	})
 }
 
-func (engine *rpcCollector) GetDelegateFromCycle(ctx context.Context, lastBlockInTheCycle rpc.BlockID, delegateAddress tezos.Address) (*rpc.Delegate, error) {
+func (engine *rpcCollector) GetDelegateFromCycle(ctx context.Context, lastBlockInTheCycle rpc.BlockID, delegateAddress mavryk.Address) (*rpc.Delegate, error) {
 	return attemptWithClients(engine.rpcs, func(client *rpc.Client) (*rpc.Delegate, error) {
 		return client.GetDelegate(ctx, delegateAddress, lastBlockInTheCycle)
 	})
 }
 
 // fetches the balance of the contract at the beginning of the block - basically the balance of the contract at the end of the previous block
-func (engine *rpcCollector) fetchContractInitialBalanceInfo(ctx context.Context, address tezos.Address, baker tezos.Address, blockWithMinimumId rpc.BlockID, lastBlockInCycle rpc.BlockID) (*common.DelegationStateBalanceInfo, error) {
+func (engine *rpcCollector) fetchContractInitialBalanceInfo(ctx context.Context, address mavryk.Address, baker mavryk.Address, blockWithMinimumId rpc.BlockID, lastBlockInCycle rpc.BlockID) (*common.DelegationStateBalanceInfo, error) {
 	blockBeforeMinimumId := rpc.NewBlockOffset(blockWithMinimumId, -1)
 
-	balance, err := attemptWithClients(engine.rpcs, func(client *rpc.Client) (tezos.Z, error) {
+	balance, err := attemptWithClients(engine.rpcs, func(client *rpc.Client) (mavryk.Z, error) {
 		return client.GetContractBalance(ctx, address, blockBeforeMinimumId)
 	})
 	if err != nil {
@@ -243,7 +243,7 @@ func (engine *rpcCollector) fetchContractInitialBalanceInfo(ctx context.Context,
 	delegate, err := engine.getContractDelegate(ctx, address, blockBeforeMinimumId)
 	if err != nil {
 		if httpStatus, ok := err.(rpc.HTTPStatus); ok && httpStatus.StatusCode() == http.StatusNotFound {
-			delegate = tezos.ZeroAddress // no delegate
+			delegate = mavryk.ZeroAddress // no delegate
 		} else {
 			return nil, errors.Join(constants.ErrFailedToFetchContract, err)
 		}
@@ -262,7 +262,7 @@ func (engine *rpcCollector) fetchContractInitialBalanceInfo(ctx context.Context,
 	stakeDelegate, err := engine.getContractDelegate(ctx, address, lastBlockInCycle)
 	if err != nil {
 		if httpStatus, ok := err.(rpc.HTTPStatus); ok && httpStatus.StatusCode() == http.StatusNotFound {
-			stakeDelegate = tezos.ZeroAddress // no delegate
+			stakeDelegate = mavryk.ZeroAddress // no delegate
 		} else {
 			return nil, errors.Join(constants.ErrFailedToFetchContract, err)
 		}
@@ -277,13 +277,13 @@ func (engine *rpcCollector) fetchContractInitialBalanceInfo(ctx context.Context,
 	}, nil
 }
 
-func (engine *rpcCollector) getUnstakeRequestsCandidates(delegate tezos.Address, blockLevel int64) ([]tezos.Address, error) {
-	var result []tezos.Address
+func (engine *rpcCollector) getUnstakeRequestsCandidates(delegate mavryk.Address, blockLevel int64) ([]mavryk.Address, error) {
+	var result []mavryk.Address
 	var err error
 
 	// try 3 times
 	for i := 0; i < 3; i++ {
-		for _, clientUrl := range engine.tzktUrls {
+		for _, clientUrl := range engine.mvktUrls {
 			url := fmt.Sprintf("%sv1/staking/unstake_requests?firstLevel.le=%d&baker=%s&select=staker.address&staker.ne=%s&staker.null=false&limit=10000", clientUrl, blockLevel, delegate.String(), delegate.String())
 			slog.Debug("fetching unstake requests candidates", "url", url)
 			response, err := engine.client.Get(url)
@@ -302,7 +302,7 @@ func (engine *rpcCollector) getUnstakeRequestsCandidates(delegate tezos.Address,
 				continue
 			}
 			for _, address := range candidates {
-				addr, err := tezos.ParseAddress(address)
+				addr, err := mavryk.ParseAddress(address)
 				if err != nil {
 					continue
 				}
@@ -351,7 +351,7 @@ func (engine *rpcCollector) fetchInitialDelegationState(ctx context.Context, del
 	}
 	delegateDelegatedContracts = lo.Uniq(append(delegateDelegatedContracts, delegateDelegatedContractsAtTheEndOfCycle...))
 
-	balance, err := attemptWithClients(engine.rpcs, func(client *rpc.Client) (tezos.Z, error) {
+	balance, err := attemptWithClients(engine.rpcs, func(client *rpc.Client) (mavryk.Z, error) {
 		return client.GetContractBalance(ctx, delegate.Delegate, blockBeforeMinimumId)
 	})
 	if err != nil {
@@ -377,15 +377,15 @@ func (engine *rpcCollector) fetchInitialDelegationState(ctx context.Context, del
 		StakeBaker:      delegate.Delegate,
 	})
 
-	toCollect := lo.Filter(delegateDelegatedContracts, func(address tezos.Address, _ int) bool {
+	toCollect := lo.Filter(delegateDelegatedContracts, func(address mavryk.Address, _ int) bool {
 		return address != delegate.Delegate // baker is already included in the state
 	})
 
 	for i := 0; i < constants.BALANCE_FETCH_RETRY_ATTEMPTS; i += 1 {
 		toCollectNow := toCollect
-		toCollect = make([]tezos.Address, 0)
+		toCollect = make([]mavryk.Address, 0)
 		// add the balance of the delegated contracts
-		runInParallel(ctx, toCollectNow, constants.CONTRACT_FETCH_BATCH_SIZE, func(ctx context.Context, address tezos.Address, mtx *sync.RWMutex) (cancel bool) {
+		runInParallel(ctx, toCollectNow, constants.CONTRACT_FETCH_BATCH_SIZE, func(ctx context.Context, address mavryk.Address, mtx *sync.RWMutex) (cancel bool) {
 			balanceInfo, err := engine.fetchContractInitialBalanceInfo(ctx, address, delegate.Delegate, blockWithMinimumId, lastBlockInTheCycle)
 
 			if err != nil {
@@ -471,7 +471,7 @@ func (engine *rpcCollector) getBlockBalanceUpdates(ctx context.Context, state *c
 
 			// then transfers
 			for transactionIndex, content := range operation.Contents {
-				if content.Kind() == tezos.OpTypeDelegation {
+				if content.Kind() == mavryk.OpTypeDelegation {
 					content, ok := content.(*rpc.Delegation)
 					if !ok {
 						slog.Debug("delegation op with invalid content", "operation", operation.Hash)
@@ -510,7 +510,7 @@ func (engine *rpcCollector) getBlockBalanceUpdates(ctx context.Context, state *c
 				}))...)
 
 				for internalResultIndex, internalResult := range content.Meta().InternalResults {
-					if internalResult.Kind == tezos.OpTypeDelegation {
+					if internalResult.Kind == mavryk.OpTypeDelegation {
 						if !state.HasContractBalanceInfo(internalResult.Source) {
 							// fetch
 							balanceInfo, err := engine.fetchContractInitialBalanceInfo(ctx, internalResult.Source, state.Baker, blockLevelWithMinimumBalance, lastBlockInCycle)
@@ -519,7 +519,7 @@ func (engine *rpcCollector) getBlockBalanceUpdates(ctx context.Context, state *c
 							}
 							state.AddBalance(internalResult.Source, *balanceInfo)
 						}
-						delegate := tezos.ZeroAddress
+						delegate := mavryk.ZeroAddress
 						if internalResult.Delegate != nil {
 							delegate = *internalResult.Delegate
 						}

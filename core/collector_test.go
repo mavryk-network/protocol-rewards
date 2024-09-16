@@ -8,11 +8,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/mavryk-network/mvgo/mavryk"
+	"github.com/mavryk-network/mvgo/rpc"
+	"github.com/mavryk-network/protocol-rewards/constants"
+	"github.com/mavryk-network/protocol-rewards/test"
 	"github.com/stretchr/testify/assert"
-	"github.com/tez-capital/protocol-rewards/constants"
-	"github.com/tez-capital/protocol-rewards/test"
-	"github.com/trilitech/tzgo/rpc"
-	"github.com/trilitech/tzgo/tezos"
 )
 
 var (
@@ -30,30 +30,30 @@ func getTransport(path string) *test.TestTransport {
 func TestGetActiveDelegates(t *testing.T) {
 	assert := assert.New(t)
 
-	cycle := 745
-	lastBlockInTheCycle := rpc.BlockLevel(5799936)
-	collector, err := newRpcCollector(defaultCtx, []string{"https://eu.rpc.tez.capital/", "https://rpc.tzkt.io/mainnet/"}, []string{"https://api.tzkt.io/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
+	cycle := 175
+	lastBlockInTheCycle := rpc.BlockLevel(1441792)
+	collector, err := newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
 	delegates, err := collector.GetActiveDelegatesFromCycle(defaultCtx, lastBlockInTheCycle)
 	assert.Nil(err)
-	assert.Equal(354, len(delegates))
+	assert.Equal(1, len(delegates))
 }
 
 func TestGetDelegationStateNoStaking(t *testing.T) {
 	assert := assert.New(t)
 	debug.SetMaxThreads(1000000)
 
-	// cycle 745
-	cycle := int64(745)
-	lastBlockInTheCycle := rpc.BlockLevel(5799936)
-	collector, err := newRpcCollector(defaultCtx, []string{"https://eu.rpc.tez.capital/", "https://rpc.tzkt.io/mainnet/"}, []string{"https://api.tzkt.io/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
+	// cycle 175
+	cycle := int64(175)
+	lastBlockInTheCycle := rpc.BlockLevel(1441792)
+	collector, err := newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
 	delegates, err := collector.GetActiveDelegatesFromCycle(defaultCtx, lastBlockInTheCycle)
 	assert.Nil(err)
 
-	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr tezos.Address, mtx *sync.RWMutex) bool {
+	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr mavryk.Address, mtx *sync.RWMutex) bool {
 		delegate, err := collector.GetDelegateFromCycle(defaultCtx, lastBlockInTheCycle, addr)
 		if err != nil {
 			assert.Nil(err)
@@ -69,16 +69,16 @@ func TestGetDelegationStateNoStaking(t *testing.T) {
 	})
 	assert.Nil(err)
 
-	// cycle 746
-	cycle = int64(746)
-	lastBlockInTheCycle = rpc.BlockLevel(5824512)
-	collector, err = newRpcCollector(defaultCtx, []string{"https://eu.rpc.tez.capital/", "https://rpc.tzkt.io/mainnet/"}, []string{"https://api.tzkt.io/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
+	// cycle 176
+	cycle = int64(176)
+	lastBlockInTheCycle = rpc.BlockLevel(1449984)
+	collector, err = newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
 	delegates, err = collector.GetActiveDelegatesFromCycle(defaultCtx, lastBlockInTheCycle)
 	assert.Nil(err)
 
-	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr tezos.Address, mtx *sync.RWMutex) bool {
+	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr mavryk.Address, mtx *sync.RWMutex) bool {
 		delegate, err := collector.GetDelegateFromCycle(defaultCtx, lastBlockInTheCycle, addr)
 		if err != nil {
 			assert.Nil(err)
@@ -99,16 +99,16 @@ func TestGetDelegationState(t *testing.T) {
 	assert := assert.New(t)
 	debug.SetMaxThreads(1000000)
 
-	// cycle 748
-	cycle := int64(748)
-	lastBlockInTheCycle := rpc.BlockLevel(5873664)
-	collector, err := newRpcCollector(defaultCtx, []string{"https://eu.rpc.tez.capital/", "https://rpc.tzkt.io/mainnet/"}, []string{"https://api.tzkt.io/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
+	// cycle 178
+	cycle := int64(178)
+	lastBlockInTheCycle := rpc.BlockLevel(1466368)
+	collector, err := newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
 	delegates, err := collector.GetActiveDelegatesFromCycle(defaultCtx, lastBlockInTheCycle)
 	assert.Nil(err)
 
-	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr tezos.Address, mtx *sync.RWMutex) bool {
+	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr mavryk.Address, mtx *sync.RWMutex) bool {
 		delegate, err := collector.GetDelegateFromCycle(defaultCtx, lastBlockInTheCycle, addr)
 		if err != nil {
 			assert.Nil(err)
@@ -125,26 +125,30 @@ func TestGetDelegationState(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestCycle749RaceConditions(t *testing.T) {
+func TestCycle179RaceConditions(t *testing.T) {
 	assert := assert.New(t)
 	debug.SetMaxThreads(1000000)
 
-	cycle := int64(749)
-	lastBlockInTheCycle := rpc.BlockLevel(5898240)
-	collector, err := newRpcCollector(defaultCtx, []string{"https://eu.rpc.tez.capital/", "https://rpc.tzkt.io/mainnet/"}, []string{"https://api.tzkt.io/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
+	cycle := int64(179)
+	lastBlockInTheCycle := rpc.BlockLevel(1474560)
+	collector, err := newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
-	delegates := []tezos.Address{
-		tezos.MustParseAddress("tz1S5WxdZR5f9NzsPXhr7L9L1vrEb5spZFur"),
-		tezos.MustParseAddress("tz1eu3mkvEjzPgGoRMuKY7EHHtSwz88VxS31"),
-		tezos.MustParseAddress("tz3LV9aGKHDnAZHCtC9SjNtTrKRu678FqSki"),
-		tezos.MustParseAddress("tz1aKxnrzx5PXZJe7unufEswVRCMU9yafmfb"),
-		tezos.MustParseAddress("tz1ZgkTFmiwddPXGbs4yc6NWdH4gELW7wsnv"),
-		tezos.MustParseAddress("tz1NuAqi3T35CPZV7tQu94wa3urCCzJrV7zc"),
-		tezos.MustParseAddress("tz3Uzceas5ZauAh47FkKEVLupFoXstWq7MbX"),
+	// delegates := []mavryk.Address{
+	// 	mavryk.MustParseAddress("mv18vxoSEtntT8WJnjrXKD8qxcepcJeTGmkA"),
+	// 	mavryk.MustParseAddress("mv1MVC17roTyHPTb3kDMiNzQmjacq6zCYXeM"),
+	// 	mavryk.MustParseAddress("mv3QxcvapxQuE784gCfGoUJScygDiiLiCsbK"),
+	// 	mavryk.MustParseAddress("mv1MfKc4giVD7GmqJnj82s6VQi6ufWF5JBtt"),
+	// 	mavryk.MustParseAddress("mv1B6CNnAbLdB7etMdXW7r4AmiNtJVggJios"),
+	// 	mavryk.MustParseAddress("mv1AMtXT4JpBZBtMpQ3KKcqLFCtecB3xzznj"),
+	// 	mavryk.MustParseAddress("mv3CXh2o75d43pBZMvkgXBQDYeUea1gMYG1Z"),
+	// }
+
+	delegates := []mavryk.Address{
+		mavryk.MustParseAddress("mv1V4h45W3p4e1sjSBvRkK2uYbvkTnSuHg8g"),
 	}
 
-	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr tezos.Address, mtx *sync.RWMutex) bool {
+	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr mavryk.Address, mtx *sync.RWMutex) bool {
 		delegate, err := collector.GetDelegateFromCycle(defaultCtx, lastBlockInTheCycle, addr)
 		if err != nil {
 			assert.Nil(err)
