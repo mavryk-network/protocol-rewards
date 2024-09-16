@@ -30,23 +30,23 @@ func getTransport(path string) *test.TestTransport {
 func TestGetActiveDelegates(t *testing.T) {
 	assert := assert.New(t)
 
-	cycle := 745
-	lastBlockInTheCycle := rpc.BlockLevel(5799936)
+	cycle := 175
+	lastBlockInTheCycle := rpc.BlockLevel(1441792)
 	collector, err := newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
 	delegates, err := collector.GetActiveDelegatesFromCycle(defaultCtx, lastBlockInTheCycle)
 	assert.Nil(err)
-	assert.Equal(354, len(delegates))
+	assert.Equal(1, len(delegates))
 }
 
 func TestGetDelegationStateNoStaking(t *testing.T) {
 	assert := assert.New(t)
 	debug.SetMaxThreads(1000000)
 
-	// cycle 745
-	cycle := int64(745)
-	lastBlockInTheCycle := rpc.BlockLevel(5799936)
+	// cycle 175
+	cycle := int64(175)
+	lastBlockInTheCycle := rpc.BlockLevel(1441792)
 	collector, err := newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
@@ -69,9 +69,9 @@ func TestGetDelegationStateNoStaking(t *testing.T) {
 	})
 	assert.Nil(err)
 
-	// cycle 746
-	cycle = int64(746)
-	lastBlockInTheCycle = rpc.BlockLevel(5824512)
+	// cycle 176
+	cycle = int64(176)
+	lastBlockInTheCycle = rpc.BlockLevel(1449984)
 	collector, err = newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
@@ -99,9 +99,9 @@ func TestGetDelegationState(t *testing.T) {
 	assert := assert.New(t)
 	debug.SetMaxThreads(1000000)
 
-	// cycle 748
-	cycle := int64(748)
-	lastBlockInTheCycle := rpc.BlockLevel(5873664)
+	// cycle 178
+	cycle := int64(178)
+	lastBlockInTheCycle := rpc.BlockLevel(1466368)
 	collector, err := newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
@@ -125,23 +125,27 @@ func TestGetDelegationState(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestCycle749RaceConditions(t *testing.T) {
+func TestCycle179RaceConditions(t *testing.T) {
 	assert := assert.New(t)
 	debug.SetMaxThreads(1000000)
 
-	cycle := int64(749)
-	lastBlockInTheCycle := rpc.BlockLevel(5898240)
+	cycle := int64(179)
+	lastBlockInTheCycle := rpc.BlockLevel(1474560)
 	collector, err := newRpcCollector(defaultCtx, []string{"https://atlasnet.rpc.mavryk.network/"}, []string{"https://atlasnet.api.mavryk.network/"}, getTransport(fmt.Sprintf("../test/data/%d", cycle)))
 	assert.Nil(err)
 
+	// delegates := []mavryk.Address{
+	// 	mavryk.MustParseAddress("mv18vxoSEtntT8WJnjrXKD8qxcepcJeTGmkA"),
+	// 	mavryk.MustParseAddress("mv1MVC17roTyHPTb3kDMiNzQmjacq6zCYXeM"),
+	// 	mavryk.MustParseAddress("mv3QxcvapxQuE784gCfGoUJScygDiiLiCsbK"),
+	// 	mavryk.MustParseAddress("mv1MfKc4giVD7GmqJnj82s6VQi6ufWF5JBtt"),
+	// 	mavryk.MustParseAddress("mv1B6CNnAbLdB7etMdXW7r4AmiNtJVggJios"),
+	// 	mavryk.MustParseAddress("mv1AMtXT4JpBZBtMpQ3KKcqLFCtecB3xzznj"),
+	// 	mavryk.MustParseAddress("mv3CXh2o75d43pBZMvkgXBQDYeUea1gMYG1Z"),
+	// }
+
 	delegates := []mavryk.Address{
-		mavryk.MustParseAddress("mv18vxoSEtntT8WJnjrXKD8qxcepcJeTGmkA"),
-		mavryk.MustParseAddress("mv1MVC17roTyHPTb3kDMiNzQmjacq6zCYXeM"),
-		mavryk.MustParseAddress("mv3QxcvapxQuE784gCfGoUJScygDiiLiCsbK"),
-		mavryk.MustParseAddress("mv1MfKc4giVD7GmqJnj82s6VQi6ufWF5JBtt"),
-		mavryk.MustParseAddress("mv1B6CNnAbLdB7etMdXW7r4AmiNtJVggJios"),
-		mavryk.MustParseAddress("mv1AMtXT4JpBZBtMpQ3KKcqLFCtecB3xzznj"),
-		mavryk.MustParseAddress("mv3CXh2o75d43pBZMvkgXBQDYeUea1gMYG1Z"),
+		mavryk.MustParseAddress("mv1V4h45W3p4e1sjSBvRkK2uYbvkTnSuHg8g"),
 	}
 
 	err = runInParallel(defaultCtx, delegates, 100, func(ctx context.Context, addr mavryk.Address, mtx *sync.RWMutex) bool {
